@@ -1,5 +1,5 @@
 # mybatis-crud
-mybatis-crud增强，目前仅支持oracle、mysql
+mybatis-crud增强，目前仅支持oracle、mysql, [使用说明](https://wpyuan.github.io/mybatis-crud-source/)
 
 ## 注意
 ### 1、为了避免出现异常
