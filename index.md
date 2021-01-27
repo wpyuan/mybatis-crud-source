@@ -250,7 +250,9 @@ updates = mapper.update(Update.<Employee>builder()
 这个根据传入的`Class<R> resultTypeClass`转换为指定的结构返回
 
 这里讲下两个`select`方法的使用：
+
 - 返回值类型为`List<Map<String, Object>>`
+
 ```java
 Employee employee = new Employee();
 UserInfo userInfo = UserInfo.builder().build();
@@ -261,9 +263,11 @@ List<Map<String, Object>> data = mapper.select(new LeftJoin<Employee>(Employee.c
     on(On.of(Employee.class, "id"), On.of(UserInfo.class, "employeeId"))
 );
 ```
+
 其中涉及`LeftJoin`左外连接、`As`别名设置，即查询列返回的列别名，具体含义在后续`LeftJoin`、`As`、`On`小节说明
 
 - 返回值类型为`List<R>`
+
 ```java
 Employee employee = new Employee();
 employee.setId(1L);
@@ -275,6 +279,7 @@ List<EmployeeVO> employeeVOS = mapper.select(EmployeeVO.class,
     .where(WhereCondition.builder(employee).build().eq("id"))
 );
 ```
+
 其中`where`指定where条件，涉及`OnCondition`、`WhereCondition`均在后续小节说明
 
 ## 其他类说明
@@ -497,7 +502,6 @@ new LeftJoin<Employee>(Employee.class)
 | --- |---|
 |LeftJoin(Class<E> eClass)	| 即使用`new LeftJoin(Employee.class)`创建左外连接构造器 |
 |LeftJoin(E entity)			| 即使用`new LeftJoin(employee)`创建左外连接构造器 |
-	
 目前两种方法推荐使用第一种创建
 
 #### 功能方法
