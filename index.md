@@ -2,6 +2,8 @@
 
 ## 项目引入
 
+[具体版本请查看](https://search.maven.org/artifact/com.github.wpyuan/mybatis-crud)
+
 ### maven
 ```xml
 <dependency>
