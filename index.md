@@ -84,7 +84,9 @@ int deleteByPrimaryKey(E entity);
 ```java
 int delete(Condition<E> condition);
 ```
+
 其中`Condition<E> condition`包含有
+
 | 方法 | 说明 |
 |--- |--- |
 | andBetween, between, orBetween | `between` ... `and` ...  的实现|
@@ -259,7 +261,7 @@ List<Map<String, Object>> data = mapper.select(new LeftJoin<Employee>(Employee.c
     on(On.of(Employee.class, "id"), On.of(UserInfo.class, "employeeId"))
 );
 ```
-其中涉及`As`别名设置，即查询列返回的列别名，具体含义在后续`As`小节，`on`指定连接条件
+其中涉及`LeftJoin`左外连接、`As`别名设置，即查询列返回的列别名，具体含义在后续`LeftJoin`、`As`、`On`小节说明
 
 - 返回值类型为`List<R>`
 ```java
@@ -277,8 +279,240 @@ List<EmployeeVO> employeeVOS = mapper.select(EmployeeVO.class,
 
 ## 其他类说明
 ### LikeEscapeHandler
+like 转义处理器，处理like语句条件值中的`%`,`_`通配符为文本处理，若不加处理器则作为原通配符处理
+
+可选择性启用，启用方式：
+```java
+@Configuration
+public class PluginInterceptor {
+
+    @Bean
+    public DefaultMybatisInterceptor defaultMybatisPlugin() {
+        DefaultMybatisInterceptor defaultMybatisInterceptor = new DefaultMybatisInterceptor();
+        defaultMybatisInterceptor.setPluginHandlers(new LikeEscapeHandler());
+        return defaultMybatisInterceptor;
+    }
+}
+
+
+@Configuration
+public class MyBatisConfig {
+
+   
+    @Autowired
+    private DefaultMybatisInterceptor defaultMybatisInterceptor;
+
+    @Bean
+    public SqlSessionFactory sqlSessionFactory() throws Exception {
+        SqlSessionFactoryBean sqlSessionFactoryBean = new SqlSessionFactoryBean();
+        sqlSessionFactoryBean.setPlugins(defaultMybatisInterceptor);
+        
+		...
+		
+		SqlSessionFactory sqlSessionFactory = sqlSessionFactoryBean.getObject();
+		
+		...
+		
+		return sqlSessionFactory;
+    }
+}
+```
+
 ### Condition
+单表条件构造器，构造方法和功能方法如下
+
+#### 构造方法
+
+|构造器				| 说明	|
+| --- | --- |
+|Condition(Class<E> eClass)		| 使用 `new Condition(Employee.class)`创建条件构造器，其中`Employee`更换为条件对应的表的entity |
+|Condition(Condition<E> source)	| 复制`Condition`方法，不是同一引用 |
+|Condition(E entity)			| 由`entity`初始化条件构造器 |
+
+也可以用builder创建条件构造器，如：
+```java 
+
+/**
+ * 有条件值的entity，构造Condition如下
+ */
+Employee employee = new Employee();
+employee.setId(1L);
+Condition.<Employee>builder(employee).build()
+
+/**
+ * 无条件值的entity，构造Condition如下
+ */
+Condition.<Employee>builder(Employee.class).build()
+
+```
+
+#### 功能方法
+
+##### 连接符方法
+支持`group`、`and`、`or`连接符，其中:
+- `group`分组，即 `(...)` ，举例:
+```sql
+where (1=1)
+```
+- `and`且，即`and (...)`，举例：
+```sql
+where 1=1 and (1=0)
+```
+- `or`或，即`or (...)`，举例：
+```sql
+where 1=1 or (1=0)
+```
+
+##### 语句方法
+
+| 方法 | 说明 |
+|--- |--- |
+| andBetween, between, orBetween | `between` ... `and` ...  的实现|
+| diy | 自定义语句实现 |
+| andEq, andEq, eq, eq, orEq, orEq | 等于`=`的实现 |
+| andGt, andGt, gt, gt, orGt, orGt | 大于`>`的实现 |
+| andGtEq, andGtEq, gtEq, gtEq, orGtEq, orGtEq | 大于等于`>=`的实现  | 
+| andIn, andIn, in, in, orIn, orIn | `in`的实现 |
+| andNotNull, notNull, orNotNull | `is not null`的实现 |
+| andNull, isNull, orNull |  `is null`的实现  |
+| andLt, andLt, lt, lt, orLt, orLt | 小于`<`的实现  |
+| andLtEq, andLtEq, ltEq, ltEq, orLtEq, orLtEq | 小于等于`<=`的实现  |
+| andLeftLike, andLeftLike, andLike, andLike, andLikeDiy, andRightLike, andRightLike, like, like, likeDiy, lLike, lLike, orLeftLike, orLeftLike, orLike, orLike, orLikeDiy, orLLike, orLLike, orRightLike, orRightLike, orRLike, orRLike, rLike, rLike |    `like`的实现 |
+| andNotBetween, notBetween, orNotBetween | `not between` ... `and` ... 的实现 |
+| andNotEq, andNotEq, nEq, nEq, orNotEq, orNotEq | 不等于`!=`的实现  |
+| andNotIn, andNotIn, notIn, notIn, orNotIn, orNotIn | `not in` 的实现  |
+| andLeftNotLike, andLeftNotLike, andNotLike, andNotLike, andNotLikeDiy, andRightNotLike, andRightNotLike, lNotLike, lNotLike, notLike, notLike, notLikeDiy, orLeftNotLike, orLeftNotLike, orLNotLike, orLNotLike, orNotLike, orNotLike, orNotLikeDiy, orRightNotLike, orRightNotLike, orRNotLike, orRNotLike, rNotLike, rNotLike | `not like` 的实现 |
+
+其中`andBetween`与`between`类似没有前缀`and`等效，是为了方便书写和简洁，这里默认了`and`前缀连接符
+
+#### 具体使用
+根据如上构造方法、连接符和语句方法，可写出高度灵活复杂的条件，举例如下：
+```java
+Condition<Employee> condition = new Condition<Employee>(Employee.class)
+        .and(
+                c -> c.group(
+                        c1 -> c1.diy(null, null, "1", "=", 1, null)
+                                .and(
+                                        c2 -> c2.diy(null, null, "1", "=", 1, null)
+                                                .diy(null, "or", "1", "=", 1, null)
+                                )
+                )
+                .or(
+                        c3 -> c3.group(
+                                c4 -> c4.diy(null, null, "1", "=", 1, null)
+                                        .diy(null, "or", "1", "=", 1, null)
+                        ).diy(null, "and", "1", "=", 0, null)
+                )
+        );
+```
+
+即实现语句：
+```sql
+and( ( 1 = 1 and ( 1 = 1 or 1 = 1 ) ) or ( ( 1 = 1 or 1 = 1 ) and 1 = 0 ) )
+```
+
+其中的`diy`为自定义语句，可替换上述`语句方法`小点表格中任意方法
+
+为了可读性和易维护性，不建议复杂的语句用组件写，建议写在`xml`文件，这里只是功能展示
+
+更多`Condition`方法尽请期待...
+
 ### OnCondition
+外连接`On`条件构造器，与`Condition`单表条件构造器不同，专注与构造外连接时，`on`后面的连接条件，即是涉及两表的条件构造器
+
+#### 构造方法
+含有`Condition`单表条件构造器所有构造方法外，还有
+|构造器								| 说明	|
+|---|---|
+|OnCondition(Class<?> eClass, Class<?> eClass2)	| 使用`new OnCondition(Employee.class, UserInfo.class)`即初始化出`Employee`和`UserInfo`对应两表的条件构造器|
+|OnCondition(Object entity, Object entity2)		| 使用`new OnCondition(employee, userInfo)`即初始化出`employee`和`userInfo`对应两表的条件构造器|
+
+也可以用builder创建条件构造器，与`Condition`单表条件构造器用法一样不做赘述
+
+#### 功能方法
+
+##### 连接符方法
+与`Condition`单表条件构造器一样不做赘述
+##### 语句方法
+含有`Condition`单表条件构造器所有语句方法外，还有
+| 方法 | 说明 |
+|--- |--- |
+| andEq, eq, orEq | 两表等于`=`的实现|
+| andNotEq, nEq, orNotEq | 两表不等于`!=`的实现  |
+| diy | 两表自定义语句实现 |
+| andGt, gt, orGt | 两表大于`>`的实现 |
+| andGtEq, gtEq, orGtEq | 两表大于等于`>=`的实现  | 
+| andLt, lt, orLt | 两表小于`<`的实现  |
+| andLtEq, ltEq, orLtEq | 两表小于等于`<=`的实现  |
+
+#### 具体使用
+根据如上方法，可写出两表联表查询，举例如下：
+```java
+Employee employee = new Employee();
+employee.setId(1L);
+List<Map<String, Object>> data = mapper.select(new LeftJoin<Employee>(Employee.class)
+        .field(UserInfoOra.class,"userName", "userId")
+        .on(On.of(Employee.class, "id"), On.of(UserInfo.class, "employeeId"),
+                OnCondition.<UserInfo>builder(UserInfo.class).build().eq("isEnable", false),
+        ).where(WhereCondition.builder(employee).build().eq("id"))
+);
+```
+
+即实现语句：
+```sql
+select e.*, u.user_id, u.user_name
+from employee e
+left join user_info u on u.employee_id = e.id and u.is_enable = 0
+where e.id = 1
+```
+
+其中`LeftJoin`、`On`下文单独小节说明
+
+更多`OnCondition`方法尽请期待...
+
 ### WhereCondition
+外连接`Where`条件构造器，也是涉及两表的条件构造器，与`OnCondition`不同的是，`WhereCondition`专注于`where`的条件，其余全部和`OnCondition`雷同，这里不作赘述
+
 ### As
+别名标注，用法如下：
+```java
+new LeftJoin<Employee>(Employee.class)
+        .field(As.of(UserInfo.class, "userId", "createdUserId"))
+```
+即，查询`UserInfo`对应表的`user_id`字段返回`createdUserId`别名，`As`需配合`LeftJoin`等外连接类使用
+
 ### On
+连接条件标注，用法如下：
+```java
+new LeftJoin<Employee>(Employee.class)
+        .on(On.of(Employee.class, "id"), On.of(UserInfo.class, "employeeId"))
+```
+即，查询`Employee`对应表左外连`UserInfo`对应表记录，连接条件是`Employee`的`id`字段等于`UserInfo`的`employeeId`字段
+
+### LeftJoin
+左外连接构造器
+
+#### 构造方法
+|构造器		| 说明	|
+| --- |---|
+|LeftJoin(Class<E> eClass)	| 即使用`new LeftJoin(Employee.class)`创建左外连接构造器 |
+|LeftJoin(E entity)			| 即使用`new LeftJoin(employee)`创建左外连接构造器 |
+目前两种方法推荐使用第一种创建
+
+#### 功能方法
+
+|限定符和类型					|方法											| 说明	|
+|---|---| --- |
+|LeftJoin<E>					|field(As... fieldAs)									| 查询两表的字段别名设置 |
+|LeftJoin<E>					|field(Class<?> eClass, String... field)				| 指定查询字段，默认全查主表字段，这里供外连接表查询字段设置 |
+|LeftJoin<E>					|on(On onLeft, On onRight, OnCondition... onCondition)	| 外连接`on`条件，`onLeft`与`onRight`指定连接关系，`OnCondition`其他连接条件，`on`上面的条件 不支持`(` `)`符号	|
+|LeftJoin<E>					|where(WhereCondition... whereConditions)				| `where`条件, 不支持`(` `)`符号 |
+
+如下举例：
+```java
+new LeftJoin<Employee>(Employee.class)
+        .field(UserInfoOra.class,"userName", "userId")
+        .on(On.of(Employee.class, "id"), On.of(UserInfo.class, "employeeId"),
+                OnCondition.<UserInfo>builder(UserInfo.class).build().eq("isEnable", false),
+        ).where(WhereCondition.builder(employee).build().eq("id"))
+```
