@@ -439,7 +439,9 @@ and( ( 1 = 1 and ( 1 = 1 or 1 = 1 ) ) or ( ( 1 = 1 or 1 = 1 ) and 1 = 0 ) )
 ##### 连接符方法
 与`Condition`单表条件构造器一样不做赘述
 ##### 语句方法
+
 含有`Condition`单表条件构造器所有语句方法外，还有
+
 | 方法 | 说明 |
 |--- |--- |
 | andEq, eq, orEq | 两表等于`=`的实现|
@@ -498,10 +500,12 @@ new LeftJoin<Employee>(Employee.class)
 左外连接构造器
 
 #### 构造方法
+
 |构造器		| 说明	|
 | --- |---|
 |LeftJoin(Class<E> eClass)	| 即使用`new LeftJoin(Employee.class)`创建左外连接构造器 |
 |LeftJoin(E entity)			| 即使用`new LeftJoin(employee)`创建左外连接构造器 |
+
 目前两种方法推荐使用第一种创建
 
 #### 功能方法
