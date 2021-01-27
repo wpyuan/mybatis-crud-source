@@ -312,13 +312,13 @@ public class MyBatisConfig {
         SqlSessionFactoryBean sqlSessionFactoryBean = new SqlSessionFactoryBean();
         sqlSessionFactoryBean.setPlugins(defaultMybatisInterceptor);
         
-		...
-		
-		SqlSessionFactory sqlSessionFactory = sqlSessionFactoryBean.getObject();
-		
-		...
-		
-		return sqlSessionFactory;
+        ...
+        
+        SqlSessionFactory sqlSessionFactory = sqlSessionFactoryBean.getObject();
+        
+        ...
+        
+        return sqlSessionFactory;
     }
 }
 ```
