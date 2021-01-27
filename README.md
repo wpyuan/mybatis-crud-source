@@ -46,3 +46,6 @@ public SqlSessionFactory sqlSessionFactory(DataSource dataSource) throws Excepti
     return sqlSessionFactory;
 }
 ```
+# 其他
+
+需要加入源码编写的可提issue申请，或联系作者490176245@qq.com
