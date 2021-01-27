@@ -427,6 +427,7 @@ and( ( 1 = 1 and ( 1 = 1 or 1 = 1 ) ) or ( ( 1 = 1 or 1 = 1 ) and 1 = 0 ) )
 
 #### 构造方法
 含有`Condition`单表条件构造器所有构造方法外，还有
+
 |构造器								| 说明	|
 |---|---|
 |OnCondition(Class<?> eClass, Class<?> eClass2)	| 使用`new OnCondition(Employee.class, UserInfo.class)`即初始化出`Employee`和`UserInfo`对应两表的条件构造器|
