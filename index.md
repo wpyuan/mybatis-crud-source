@@ -497,6 +497,7 @@ new LeftJoin<Employee>(Employee.class)
 | --- |---|
 |LeftJoin(Class<E> eClass)	| 即使用`new LeftJoin(Employee.class)`创建左外连接构造器 |
 |LeftJoin(E entity)			| 即使用`new LeftJoin(employee)`创建左外连接构造器 |
+	
 目前两种方法推荐使用第一种创建
 
 #### 功能方法
