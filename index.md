@@ -528,3 +528,92 @@ new LeftJoin<Employee>(Employee.class)
                 OnCondition.<UserInfo>builder(UserInfo.class).build().eq("isEnable", false),
         ).where(WhereCondition.builder(employee).build().eq("id"))
 ```
+
+## 扩展
+
+本插件经过一系列封装，具有高度的扩展性，利于应对各种场景，即可在sql各种阶段加入自定义逻辑，以下仅供参考，更多场景自行判断使用。
+
+### 可支持扩展的几种类型
+
+- 删除前置处理
+- 插入前置处理
+- 查询前置处理
+- 更新前置处理
+- prepare前置处理
+
+### 具体操作
+下面分别给上述几种类型举例，如何在指定类型加入自定义逻辑处理器
+
+#### 删除前置处理
+
+自定义删除前置处理器，需实现`DeleteMybatisInterceptorHandler`接口，例子:
+```java
+public class DelAllHandler implements DeleteMybatisInterceptorHandler {
+    @Override
+    public void before(Invocation invocation) {
+        //do something
+    }
+}
+```
+上述例子是删除全部数据前置处理器，这个用于拦截些错误语句或sql注入导致的全表删除数据的异常操作，可在before前置方法中加入处理逻辑。
+
+注意：`com.github.mybatis.crud.handler.DeleteMybatisInterceptorHandler`
+
+#### 插入前置处理
+
+自定义删除前置处理器，需实现`InsertMybatisInterceptorHandler`接口，例子:
+```java
+public class WhInsertHandler implements InsertMybatisInterceptorHandler {
+    @Override
+    public void before(Invocation invocation) {
+        //do something
+    }
+}
+```
+上述例子是插入数据`wh`字段填入前置处理器，这个用于插入记录前，填充与业务无关的、便于审计运维的`who`、`when`等`wh`字段，可在before前置方法中加入处理逻辑。
+
+注意：`com.github.mybatis.crud.handler.InsertMybatisInterceptorHandler`
+
+#### 查询前置处理
+
+自定义查询前置处理器，需实现`SelectMybatisInterceptorHandler`接口，例子:
+```java
+public class TenantHandler implements SelectMybatisInterceptorHandler {
+    @Override
+    public void before(Invocation invocation) {
+        //do something
+    }
+}
+```
+上述例子是租户查询前置处理器，这个用于查询前，追加租户id条件做数据屏蔽使用，可在before前置方法中加入处理逻辑。
+
+注意：`com.github.mybatis.crud.handler.SelectMybatisInterceptorHandler`
+
+#### 更新前置处理
+
+自定义更新前置处理器，需实现`UpdateMybatisInterceptorHandler`接口，例子:
+```java
+public class VersionHandler implements UpdateMybatisInterceptorHandler {
+    @Override
+    public void before(Invocation invocation) {
+        //do something
+    }
+}
+```
+上述例子是更新版本号前置处理器，这个用于更新前，校对记录版本号、升版本号处理，可在before前置方法中加入处理逻辑。
+
+注意：`com.github.mybatis.crud.handler.UpdateMybatisInterceptorHandler`
+
+#### prepare前置处理
+自定义prepare前置处理器，需实现`PrepareMybatisInterceptorHandler`接口，例子:
+```java
+public class ConnHandler implements PrepareMybatisInterceptorHandler {
+    @Override
+    public void before(Invocation invocation) {
+        //do something
+    }
+}
+```
+上述例子是连接prepare前置处理器，这个用于对连接Connection做处理操作，可在before前置方法中加入处理逻辑。
+
+注意：`com.github.mybatis.crud.handler.PrepareMybatisInterceptorHandler`
