@@ -46,6 +46,32 @@ public SqlSessionFactory sqlSessionFactory(DataSource dataSource) throws Excepti
     return sqlSessionFactory;
 }
 ```
+
+### 2、若项目需要使用like转义处理器`LikeEscapeHandler`或自定义`SqlSessionFactory`，则需排除预注册的bean
+
+#### 2.1、需使用like转义处理器`LikeEscapeHandler`或使用自定义处理器的，则需排除预注册的`PluginInterceptor`
+具体操作如下：
+```java
+// 自定义插件配置的请排除预定义的插件配置PluginInterceptor.class
+@SpringBootApplication(exclude = {PluginInterceptor.class})
+public class TestApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(TestApplication.class, args);
+    }
+}
+```
+
+#### 2.2、需使用自定义`SqlSessionFactory`的，则需排除预注册的`MyBatisSqlSessionFactoryConfig`
+```java
+// 自定义SqlSessionFactory的请排除预定义的MyBatisSqlSessionFactoryConfig.class
+@SpringBootApplication(exclude = {MyBatisSqlSessionFactoryConfig.class})
+public class TestApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(TestApplication.class, args);
+    }
+}
+```
+
 # 其他
 
 需要加入源码编写的可提issue申请，或联系作者490176245@qq.com
